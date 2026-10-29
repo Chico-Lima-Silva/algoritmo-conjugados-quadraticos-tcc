@@ -56,11 +56,28 @@ O repositório mantém o código original intacto e inclui uma versão refatorad
 ## 📂 Estrutura do Repositório
 
 ```text
-├── Gradiente_Conjugado_Limpo.ipynb               # Notebook refatorado, comentado e com gráfico de convergência
-├── gradiente_conjugado_limpo.py                  # Script Python limpo, coeso e didático
+├── Gradiente_Conjugado_Limpo.ipynb               # Notebook refatorado (2º e 3º grau + gráficos de convergência)
+├── gradiente_conjugado_limpo.py                  # Módulo Python limpo (2º grau 2D/3D e 3º grau cúbico)
+├── test_gradiente_conjugado.py                   # Bateria de testes automatizados (unittest)
 ├── Algoritomo_conjugados_quadraticos_teste.ipynb # Notebook original do TCC (compatível com Colab)
 ├── Algoritomo_conjugados_quadraticos_teste.py    # Primeiro script Python original (2021)
 └── README.md                                     # Documentação do projeto
+```
+
+---
+
+## 🧪 Casos de Teste Incluídos (2º Grau e 3º Grau)
+
+O arquivo `test_gradiente_conjugado.py` e o módulo principal validam os seguintes cenários:
+
+1. **2º Grau Diagonal ($2 \times 2$ — Dados Originais do TCC):** Convergência imediata em **1 iteração** para $x^* = [-8/15, -3/15]^T$.
+2. **2º Grau Acoplado ($2 \times 2$ Não-Diagonal):** Convergência exata em **2 iterações** para elipses inclinadas.
+3. **2º Grau Tridimensional ($3 \times 3$ em $\mathbb{R}^3$):** Convergência exata em **3 iterações** para $x^* = [1, 1, 1]^T$.
+4. **Polinômios de 3º Grau (Funções Cúbicas — Desacopladas e Acopladas):** Extensão não-linear (Fletcher-Reeves / Newton-CG com Hessiana variável $H(x)$), convergindo quadraticamente para o mínimo analítico.
+
+Para rodar a suíte de testes automatizados:
+```bash
+python -m unittest test_gradiente_conjugado.py -v
 ```
 
 ---
