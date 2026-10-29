@@ -1,120 +1,100 @@
-# 📐 Método dos Gradientes Conjugados — Otimização Quadrática (TCC)
+# 📐 Um Estudo Sobre o Método de Direções Conjugadas para Otimização Irrestrita
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jpM90kuKxQ6HxFstiut75V1-EG-yoNHj)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)
 ![NumPy](https://img.shields.io/badge/NumPy-C%C3%A1lculo%20Num%C3%A9rico-013243?logo=numpy&logoColor=white)
-![Status](https://img.shields.io/badge/Projeto-TCC%20%2F%20Acad%C3%AAmico-success)
+![UFAM](https://img.shields.io/badge/UFAM-PIBIC%20%2F%20FAPEAM-006633)
 
-Implementação em Python do **Método dos Gradientes Conjugados** para minimização irrestrita de funções quadráticas estritamente convexas.
+Implementação em Python do **Método das Direções Conjugadas**, **Busca Exata pela Seção Áurea** e **Busca Inexata de Armijo** para minimização irrestrita de funções quadráticas (2º grau) e não-quadráticas (3º e 4º grau).
 
-> 💡 **Sobre este projeto:** Este repositório guarda o **meu primeiro código escrito em Python**, desenvolvido originalmente em 2021 para o meu **Trabalho de Conclusão de Curso (TCC)**, junto com uma **versão refatorada, limpa e didática** que preserva os arquivos históricos originais e mostra a evolução do código.
+> 💡 **Sobre este projeto:** Este repositório reúne o **meu primeiro código escrito em Python** (desenvolvido em 2021 durante a Iniciação Científica / TCC na **Universidade Federal do Amazonas — UFAM**, projeto `PIB-E/0074/2020` com apoio da **FAPEAM**, sob orientação do **Prof. Dr. Roberto Cristóvão Mesquita Silva**), o [Relatório Final em PDF (`Relatorio_Final_PIBIC_UFAM_2021.pdf`)](./Relatorio_Final_PIBIC_UFAM_2021.pdf) e uma **versão refatorada, limpa e testada** de todos os algoritmos estudados.
 
 ---
 
-## 🎯 O Problema Matemático
+## 🎯 Fundamentação Matemática
 
-O objetivo é encontrar o ponto de mínimo global $x^* \in \mathbb{R}^n$ de uma função quadrática convexa:
+### 1. Caso Quadrático (2º Grau — Seção 3.3.2)
+Minimização de uma função quadrática estritamente convexa:
 
 $$f(x) = \frac{1}{2} x^T A x + b^T x + c$$
 
-onde:
-* $A \in \mathbb{R}^{n \times n}$ é uma matriz **simétrica e definida positiva** ($A = A^T$ e $x^T A x > 0, \forall x \neq 0$);
-* $b \in \mathbb{R}^n$ é um vetor;
-* $c \in \mathbb{R}$ é uma constante escalar.
+onde $A \in \mathbb{R}^{n \times n}$ é simétrica definida positiva ($A > 0$). O método gera direções $A$-conjugadas ($(d^i)^T A d^j = 0, \forall i \neq j$) que garantem encontrar o minimizador global $x^*$ em **no máximo $n$ iterações**:
 
-Enquanto o método do Gradiente Descendente clássico pode sofrer com trajetórias em "zigue-zague" em vales estreitos, o **Método dos Gradientes Conjugados** gera direções de busca $A$-ortogonais ($d_i^T A d_j = 0$ para $i \neq j$), garantindo a convergência exata em **no máximo $n$ iterações**.
+* **Tamanho exato do passo ($t_k$):**
+  $$t_k = -\frac{\nabla f(x^k)^T d^k}{(d^k)^T A d^k}$$
+* **Coeficiente de conjugação ($\beta_k$):**
+  $$\beta_k = \frac{(d^k)^T A \nabla f(x^{k+1})}{(d^k)^T A d^k}$$
 
-### Fluxo do Algoritmo
-
-```mermaid
-flowchart LR
-    A["Início: x₀, g₀ = Ax₀ + b, d₀ = -g₀"] --> B{"||gₖ|| < tol?"}
-    B -- Sim --> C["Mínimo Encontrado: x* = xₖ"]
-    B -- Não --> D["Passo ótimo: tₖ = -(gₖᵀ dₖ) / (dₖᵀ A dₖ)"]
-    D --> E["Atualiza ponto: xₖ₊₁ = xₖ + tₖ dₖ"]
-    E --> F["Novo gradiente: gₖ₊₁ = A xₖ₊₁ + b"]
-    F --> G["Conjugação: βₖ = (dₖᵀ A gₖ₊₁) / (dₖᵀ A dₖ)"]
-    G --> H["Nova direção: dₖ₊₁ = -gₖ₊₁ + βₖ dₖ"]
-    H --> B
-```
+### 2. Extensão Não-Quadrática — 3º e 4º Grau (Seção 3.3.3)
+Para funções gerais $f: \mathbb{R}^n \to \mathbb{R}$ de 3º grau (cúbicas), 4º grau ou superiores:
+1. **Busca Unidirecional para o passo $t_k$ (Seção 3.2):**
+   * **Busca Exata (Método da Seção Áurea em 2 Fases):** Encontra o intervalo $[a,b]$ e reduz pela razão áurea ($\theta_1 = \frac{3-\sqrt{5}}{2} \approx 0,382$ e $\theta_2 = \frac{\sqrt{5}-1}{2} \approx 0,618$).
+   * **Busca Inexata (Condição de Armijo):** Encontra $t = \gamma^m$ tal que $f(x^k + t d^k) \le f(x^k) + \eta t \nabla f(x^k)^T d^k$.
+2. **Fórmulas para $\beta_k$ com reinício a cada $n$ passos ($(k+1) \bmod n = 0$):**
+   * **Fletcher-Reeves (1964):**
+     $$\beta_k^{FR} = \frac{\|\nabla f(x^{k+1})\|^2}{\|\nabla f(x^k)\|^2}$$
+   * **Polak-Ribière (1969):**
+     $$\beta_k^{PR} = \frac{\nabla f(x^{k+1})^T (\nabla f(x^{k+1}) - \nabla f(x^k))}{\|\nabla f(x^k)\|^2}$$
 
 ---
 
-## 🔄 Evolução do Código (Original do TCC vs. Versão Limpa)
-
-O repositório mantém o código original intacto e inclui uma versão refatorada para estudo:
+## 🔄 Evolução do Código (Original de 2021 vs. Versão Refatorada)
 
 | Aspecto | Código Original (`Algoritomo_...`) | Versão Limpa (`gradiente_conjugado_limpo.py`) |
 | :--- | :--- | :--- |
 | **Multiplicação Matricial** | `np.dot(np.dot(d.T, A), d)` | Operador nativo `@`: `d @ A @ d` |
 | **Critério de Parada** | Função `comparar(g)` com `for` e strings `"igual"` / `"Não igual"` | Norma euclidiana do gradiente: `np.linalg.norm(g) < tol` |
-| **Eficiência por Iteração** | Recalculava `grad(x0)` e `A @ d` múltiplas vezes | Calcula `Ad = A @ d` uma única vez por iteração |
-| **Estrutura** | Variáveis no escopo global | Funções puras com tipagem e histórico de trajetória |
+| **Busca Linear ($t_k$)** | Apenas fórmula quadrática com $A$ fixo | **Seção Áurea (2 fases)**, **Busca de Armijo** e **Fórmula Exata** |
+| **Variantes de $\beta_k$** | Apenas fórmula matricial com $A$ | **Matricial ($A$)**, **Fletcher-Reeves (`FR`)** e **Polak-Ribière (`PR`)** |
 
 ---
 
 ## 📂 Estrutura do Repositório
 
 ```text
-├── Gradiente_Conjugado_Limpo.ipynb               # Notebook refatorado (2º e 3º grau + gráficos de convergência)
-├── gradiente_conjugado_limpo.py                  # Módulo Python limpo (2º grau 2D/3D e 3º grau cúbico)
-├── test_gradiente_conjugado.py                   # Bateria de testes automatizados (unittest)
-├── Algoritomo_conjugados_quadraticos_teste.ipynb # Notebook original do TCC (compatível com Colab)
+├── Relatorio_Final_PIBIC_UFAM_2021.pdf           # Monografia / Relatório Final completo (UFAM / FAPEAM)
+├── Gradiente_Conjugado_Limpo.ipynb               # Notebook didático com gráficos de convergência (2º e 3º grau)
+├── gradiente_conjugado_limpo.py                  # Módulo completo (Quadrático, Seção Áurea, Armijo, FR, PR, Newton-CG)
+├── test_gradiente_conjugado.py                   # Suíte de 8 testes automatizados (incluindo a Seção 3.4 do Relatório)
+├── Algoritomo_conjugados_quadraticos_teste.ipynb # Notebook original de 2021 (compatível com Colab)
 ├── Algoritomo_conjugados_quadraticos_teste.py    # Primeiro script Python original (2021)
 └── README.md                                     # Documentação do projeto
 ```
 
 ---
 
-## 🧪 Casos de Teste Incluídos (2º Grau e 3º Grau)
+## 🧪 Casos de Teste da Seção 3.4 do Relatório (`test_gradiente_conjugado.py`)
 
-O arquivo `test_gradiente_conjugado.py` e o módulo principal validam os seguintes cenários:
+A suíte de testes valida automaticamente tanto funções quadráticas quanto os polinômios de 3º e 4º grau da **Seção 3.4 (Teste Computacional)** do relatório:
 
-1. **2º Grau Diagonal ($2 \times 2$ — Dados Originais do TCC):** Convergência imediata em **1 iteração** para $x^* = [-8/15, -3/15]^T$.
-2. **2º Grau Acoplado ($2 \times 2$ Não-Diagonal):** Convergência exata em **2 iterações** para elipses inclinadas.
-3. **2º Grau Tridimensional ($3 \times 3$ em $\mathbb{R}^3$):** Convergência exata em **3 iterações** para $x^* = [1, 1, 1]^T$.
-4. **Polinômios de 3º Grau (Funções Cúbicas — Desacopladas e Acopladas):** Extensão não-linear (Fletcher-Reeves / Newton-CG com Hessiana variável $H(x)$), convergindo quadraticamente para o mínimo analítico.
-
-Para rodar a suíte de testes automatizados:
-```bash
-python -m unittest test_gradiente_conjugado.py -v
-```
+| Teste | Grau / Dimensão | Função / Parâmetros | Ponto Inicial ($x^0$) | Mínimo Encontrado ($x^*$) |
+| :--- | :---: | :--- | :---: | :---: |
+| **1. TCC Diagonal** | 2º Grau ($\mathbb{R}^2$) | $A = 15I, \; b = [8, 3]^T$ | $[10, 10]^T$ | $[-0.533333, -0.2]^T$ (1 passo) |
+| **2. Relatório 3.4.1** | 2º Grau ($\mathbb{R}^1$) | $A = [42.5], \; b = [-12]$ | $10$ | $0.2823529411764706$ (1 passo) |
+| **3. Elíptica 2D** | 2º Grau ($\mathbb{R}^2$) | $A = [[4, 1], [1, 3]], \; b = [-1, -2]^T$ | $[10, 10]^T$ | $[0.090909, 0.636364]^T$ (2 passos) |
+| **4. Tridimensional** | 2º Grau ($\mathbb{R}^3$) | Matriz $3 \times 3$ simétrica definida positiva | $[10, -5, 8]^T$ | $[1, 1, 1]^T$ (3 passos) |
+| **5. Relatório 3.4.2 (Cúbica A)** | 3º Grau ($\mathbb{R}^1$) | $f(x) = -x^3 + 4x^2 + 3x + 4$ (Seção Áurea, FR/PR) | $0$ | $-0.3333333$ ($-1/3$) |
+| **6. Relatório 3.4.2 (Quártica)** | 4º Grau ($\mathbb{R}^1$) | $f(x) = x^4 - 4x^3 + 6x^2 - 4x + 1 = (x-1)^4$ | $0$ | $1.000000$ |
+| **7. Relatório 3.4.2 (Cúbica B)** | 3º Grau ($\mathbb{R}^1$) | $f(x) = -x^3 + 6x^2 + 20x + 3$ (Armijo, PR) | $0$ | $-1.265986$ |
+| **8. Cúbica 2D** | 3º Grau ($\mathbb{R}^2$) | $f(x_1, x_2) = \frac{1}{3}(x_1^3+x_2^3) + 2x_1^2 + 1.5x_2^2 - 5x_1 - 4x_2$ | $[5, 5]^T$ | $[1.0, 1.0]^T$ |
 
 ---
 
 ## 🚀 Como Executar
 
-### 1. Direto no Navegador (Google Colab)
-Clique no selo **Open in Colab** no topo desta página para abrir e rodar o notebook sem instalar nada.
-
-### 2. Na sua Máquina Local
-Clone o repositório e instale as dependências:
-
 ```bash
-git clone https://github.com/Chico-Lima-Silva/algoritmo-conjugados-quadraticos-tcc.git
-cd algoritmo-conjugados-quadraticos-tcc
-pip install numpy matplotlib jupyter
-```
-
-Execute o script limpo no terminal:
-```bash
+# Executar os exemplos do Relatório PIBIC
 python gradiente_conjugado_limpo.py
-```
 
-**Saída esperada:**
-```text
-=== EXEMPLO 1: Matriz Diagonal (Dados originais do TCC) ===
-Iteração  0 | x = [10. 10.] | ||grad|| = 2.20e+02
-Iteração  1 | x = [-0.533333 -0.2     ] | ||grad|| = 1.78e-15
-
-Convergência atingida na iteração 1!
-Ponto de mínimo encontrado: [-0.53333333 -0.2       ]
-Solução exata (-A^-1 b)   : [-0.53333333 -0.2       ]
+# Rodar a bateria de 8 testes automatizados
+python -m unittest test_gradiente_conjugado.py -v
 ```
 
 ---
 
-## 👤 Autor
+## 👤 Autor e Créditos Acadêmicos
 
-**Francisco Lima (`Chico-Lima-Silva`)**
-* Primeiro projeto em Python desenvolvido durante a graduação (TCC).
+* **Autor:** Francisco Lima da Silva (`Chico-Lima-Silva`)
+* **Orientador:** Prof. Dr. Roberto Cristóvão Mesquita Silva
+* **Instituição:** Universidade Federal do Amazonas (UFAM) — Programa Institucional de Iniciação Científica (`PIB-E/0074/2020`)
+* **Financiamento:** Fundação de Amparo à Pesquisa do Estado do Amazonas (FAPEAM)
